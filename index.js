@@ -1,31 +1,30 @@
 const Scratch = require('scratch3-api');
-const { Client } = require("@google/genai"); // Use Client for the unified SDK
+const { googleGenAI } = require("@google/genai"); // Notice the lowercase 'g'
 
 async function runBot() {
     try {
-        // 1. Login to Scratch
+        // 1. Log in to GeminiModel
         const session = await Scratch.UserSession.create(
             process.env.BOT_USERNAME, 
             process.env.BOT_PASSWORD
         );
         
-        // 2. Setup the 2026 Unified Client
-        const client = new Client({ apiKey: process.env.GEMINI_API_KEY });
+        // 2. The 2026 Initialization (No 'new' keyword!)
+        const ai = googleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-        // 3. The 2026 Way to Generate Content
-        // Note: No more getGenerativeModel!
-        const response = await client.models.generateContent({
-            model: 'gemini-2.0-flash', // or 'gemini-2.5-flash-lite'
-            contents: 'Say hi to mohib872345 in 5 words.'
-        });
-
-        console.log(`✅ GeminiModel: ${response.text}`);
+        console.log(`✅ GeminiModel is authenticated!`);
         
-        // 4. Post to Scratch
+        // 3. Generate and Post
+        const result = await model.generateContent("Say 'System Online' to mohib872345.");
+        const aiResponse = result.response.text();
+
         await session.comment({
             user: "mohib872345",
-            content: response.text
+            content: aiResponse
         });
+
+        console.log("🚀 Mission accomplished.");
 
     } catch (err) {
         console.error("❌ Fatal Error:", err.message);
