@@ -1,18 +1,13 @@
 {
-  "name": "gemini-scratch-bot",
-  "version": "2.5.0",
-  "description": "Scratch bot powered by Gemini 2.5 Flash-Lite",
+  "name": "scratch-gemini-bot",
+  "version": "1.0.0",
+  "description": "Scratch bot powered by Gemini",
   "main": "index.js",
-  "type": "commonjs",
+  "dependencies": {
+    "scratch3-api": "^1.2.1",
+    "@google/generative-ai": "^0.21.0"
+  },
   "scripts": {
     "start": "node index.js"
-  },
-  "dependencies": {
-    "@google/genai": "^1.39.0",
-    "scratch3-api": "latest",
-    "dotenv": "^16.4.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }
