@@ -1,7 +1,7 @@
 {
   "name": "gemini-scratch-bot",
-  "version": "2.0.0",
-  "description": "A Scratch bot powered by Gemini 2.0",
+  "version": "2.5.0",
+  "description": "Scratch bot powered by Gemini 2.5 Flash-Lite",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
