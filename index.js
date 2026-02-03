@@ -10,7 +10,7 @@ http.createServer((req, res) => {
 }).listen(process.env.PORT || 8080);
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 let lastCheckedCommentId = null;
 const TARGET_ACCOUNT = "GeminiModel"; // Targeted as requested
 
