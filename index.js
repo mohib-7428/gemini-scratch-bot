@@ -2,17 +2,18 @@ const http = require('http');
 const Scratch = require('scratch3-api');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// 1. HEARTBEAT
+// 1. HEARTBEAT (Keeps Railway happy)
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.write('GeminiModel Bot Online');
     res.end();
 }).listen(process.env.PORT || 8080);
 
+// 2. AI CONFIG (Fixed model string)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); 
 let lastCheckedCommentId = null;
-const TARGET_ACCOUNT = "GeminiModel"; // Targeted as requested
+const TARGET_ACCOUNT = "GeminiModel";
 
 async function runBot() {
     try {
@@ -27,13 +28,11 @@ async function runBot() {
             try {
                 console.log(`🧐 Scanning ${TARGET_ACCOUNT} for !ask...`);
                 
-                // Fetch using the site-api which is more reliable for "Chat Places"
                 const response = await fetch(`https://scratch.mit.edu/site-api/comments/user/${TARGET_ACCOUNT}/?cachebust=${Date.now()}`, {
                     headers: { "User-Agent": "Mozilla/5.0" }
                 });
                 const html = await response.text();
                 
-                // Enhanced Regex to find comment ID and Content
                 const commentRegex = /<div id="comments-(\d+)"[\s\S]*?<div class="content">([\s\S]*?)<\/div>/g;
                 let match;
 
@@ -46,24 +45,28 @@ async function runBot() {
                         lastCheckedCommentId = commentId;
 
                         const question = fullText.split(/!ask/i)[1].trim();
-                        console.log(`🤖 Processing: ${question}`);
+                        console.log(`🤖 Processing AI response for: ${question}`);
 
+                        // API CALL
                         const result = await model.generateContent(question);
-                        const aiResponse = (await result.response).text().substring(0, 400);
+                        const aiResponse = result.response.text().substring(0, 450);
 
+                        console.log(`📤 Sending to Scratch: ${aiResponse.substring(0, 20)}...`);
+                        
                         await session.comment({
                             user: TARGET_ACCOUNT,
                             content: `🤖 ${aiResponse}`,
                             parent: commentId
                         });
-                        console.log("✅ Reply posted to GeminiModel!");
+                        
+                        console.log("✅ SUCCESS: Reply posted to Scratch!");
                         break; 
                     }
                 }
             } catch (err) {
-                console.error("❌ Scan Error:", err.message);
+                console.error("❌ Error:", err.message);
             }
-        }, 30000); // 30 second check
+        }, 30000); 
 
     } catch (error) {
         console.error("❌ Setup Failed:", error.message);
