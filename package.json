@@ -1,12 +1,18 @@
 {
   "name": "gemini-scratch-bot",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "description": "A Scratch bot powered by Gemini 2.0",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "scratch3-api": "latest",
-    "@google/genai": "latest"
+    "@google/genai": "^1.39.0",
+    "scratch3-api": "^0.6.0",
+    "dotenv": "^16.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
