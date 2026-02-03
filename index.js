@@ -1,58 +1,81 @@
+const http = require('http');
 const Scratch = require('scratch3-api');
-const { GoogleGenAI } = require("@google/genai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-async function startBot() {
+// 1. THE HEARTBEAT (Fixes "Stopping Container" / SIGTERM)
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.write('Bot is Alive');
+    res.end();
+}).listen(process.env.PORT || 8080);
+
+// 2. CONFIGURATION
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+let lastCheckedCommentId = null;
+
+// 3. THE MAIN BOT ENGINE
+async function runBot() {
     try {
-        console.log("🚀 Attempting to bypass Scratch shield...");
-        
-        // LOGIN (With a slight delay to look human)
+        console.log("🚀 Logging into Scratch...");
         const session = await Scratch.UserSession.create(
             process.env.BOT_USERNAME, 
             process.env.BOT_PASSWORD
         );
-        
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
         console.log("✅ SUCCESS! Inside the Scratch servers.");
 
-        // THE LOOP
+        // Loop every 2 minutes
         setInterval(async () => {
             try {
-                const user = "mohib872345";
-                const comments = await session.getComments(user);
-                const latest = comments[0];
+                console.log("😴 Checking for new !ask comments...");
+                
+                // Fetch comments from your profile
+                // (Using Rest.Users.get to ensure we have the right object)
+                const userObj = await Scratch.Rest.Users.get(process.env.BOT_USERNAME);
+                
+                // Note: If scratch3-api's User object is tricky, 
+                // we use the session.comment method to reply.
+                const response = await fetch(`https://scratch.mit.edu/site-api/comments/user/${process.env.BOT_USERNAME}/?count=5`);
+                const html = await response.text();
+                
+                // Quick regex to find the latest !ask command in the HTML
+                const match = html.match(/!ask\s+([^<]+)/);
+                const commentIdMatch = html.match(/id="comments-(\d+)"/);
 
-                if (latest && latest.content.startsWith("!ask") && latest.author.username !== process.env.BOT_USERNAME) {
-                    console.log("💬 Command found!");
-                    
-                    const response = await ai.models.generateContent({
-                        model: "gemini-2.5-flash-lite",
-                        contents: `Reply to: "${latest.content}" in 10 words.`
-                    });
+                if (match && commentIdMatch) {
+                    const question = match[1].trim();
+                    const currentId = commentIdMatch[1];
 
-                    await session.comment({
-                        user: user,
-                        content: `🤖 @${latest.author.username} ${response.text}`,
-                        parent: latest.id
-                    });
-                    console.log("🚀 Reply posted!");
+                    if (currentId !== lastCheckedCommentId) {
+                        console.log(`💬 New Question: ${question}`);
+                        lastCheckedCommentId = currentId;
+
+                        // Get Gemini's Answer
+                        const result = await model.generateContent(question);
+                        const answer = result.response.text().substring(0, 400); // Scratch limit
+
+                        // Post the reply
+                        await session.comment({
+                            user: process.env.BOT_USERNAME,
+                            content: `🤖 @${process.env.BOT_USERNAME} ${answer}`,
+                            parent: currentId
+                        });
+                        console.log("✉️ Reply posted!");
+                    }
                 }
             } catch (err) {
-                // If we get "Servers are down" here, we just stay quiet and wait.
-                if (err.message.includes("down")) {
-                    console.log("😴 Scratch is sleeping (Rate Limited). Waiting...");
-                } else {
-                    console.error("⚠️ Loop Error:", err.message);
-                }
+                console.error("⚠️ Loop Error:", err.message);
             }
-        }, 180000); // 3 MINUTES (Much safer for new bots in 2026)
+        , 120000); // 2 minute delay
 
-    } catch (err) {
-        console.error("❌ Login Failed:", err.message);
-        console.log("⏳ Waiting 5 minutes before Railway restarts...");
-        // This stops the "Error Stack" by making the bot wait before crashing
-        await new Promise(resolve => setTimeout(resolve, 300000));
-        process.exit(1); 
+    } catch (error) {
+        if (error.message.includes("403") || error.message.includes("down")) {
+            console.error("❌ Scratch is blocking this IP. Waiting 15 mins...");
+        } else {
+            console.error("❌ Fatal Error:", error.message);
+        }
     }
 }
 
-startBot();
+runBot();
