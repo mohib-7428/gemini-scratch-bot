@@ -36,6 +36,6 @@ async function checkComments() {
     }
 }
 
-// Check every 30 seconds
-setInterval(checkComments, 30000);
+// Check every 60 seconds
+setInterval(checkComments, 60000);
 checkComments();
