@@ -20,7 +20,7 @@ async function checkComments() {
             const userPrompt = latest.content.replace("!ask", "").trim();
 
             const response = await ai.models.generateContent({
-                model: "gemini-2.5-flash-lite",
+                model: "gemini-3-flash",
                 contents: `A user on Scratch asked: "${userPrompt}". Reply as a cool bot in 15 words.`
             });
 
