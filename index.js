@@ -1,48 +1,53 @@
-setInterval(async () => {
+async function runBot() {
+    try {
+        console.log("🚀 Logging into Scratch...");
+        const session = await Scratch.UserSession.create(
+            process.env.BOT_USERNAME, 
+            process.env.BOT_PASSWORD
+        );
+        console.log("✅ Logged in!");
+
+        setInterval(async () => {
             try {
-                console.log("😴 Checking for new !ask comments...");
+                console.log("Checking...");
                 
-                // Switch to site-api (Less likely to be blocked by Cloudflare)
-                const response = await fetch(`https://scratch.mit.edu/site-api/comments/user/${process.env.BOT_USERNAME}/?cachebust=${Date.now()}`);
-                const html = await response.text();
-                
-                // We parse the HTML manually to find the comments
-                // This regex looks for the comment content and the ID
-                const commentRegex = /<div id="comments-(\d+)"[\s\S]*?<div class="content">([\s\S]*?)<\/div>/g;
-                let match;
-                let foundAny = false;
+                // Use the library's internal Rest requester
+                const url = `https://api.scratch.mit.edu/users/${process.env.BOT_USERNAME}/comments?limit=5&nocache=${Date.now()}`;
+                const response = await fetch(url);
+                const comments = await response.json();
 
-                while ((match = commentRegex.exec(html)) !== null) {
-                    foundAny = true;
-                    const commentId = match[1];
-                    const text = match[2].trim().toLowerCase();
+                if (comments && comments.length > 0) {
+                    const latest = comments[0];
+                    const text = latest.content;
 
-                    // If we find !ask and it's a new ID
-                    if (text.includes("!ask") && String(commentId) !== String(lastCheckedCommentId)) {
-                        console.log(`🎯 Comment Found: (${text})`);
-                        lastCheckedCommentId = commentId;
+                    // LOG WHAT WE SEE
+                    console.log(`💬 Latest comment: "${text}"`);
 
-                        const question = text.split("!ask")[1].trim();
-                        console.log(`🤖 Asking Gemini: ${question}`);
+                    if (text.toLowerCase().includes("!ask") && String(latest.id) !== String(lastCheckedCommentId)) {
+                        console.log(`🎯 Trigger Found!`);
+                        lastCheckedCommentId = latest.id;
 
+                        const question = text.split(/!ask/i)[1].trim();
                         const result = await model.generateContent(question);
-                        const responseAI = await result.response;
-                        const answer = responseAI.text().substring(0, 400);
+                        const answer = (await result.response).text().substring(0, 400);
 
+                        // Use the session to comment
                         await session.comment({
                             user: process.env.BOT_USERNAME,
-                            content: `🤖 ${answer}`,
-                            parent: commentId
+                            content: `🤖 @${latest.author.username} ${answer}`,
+                            parent: latest.id
                         });
-                        console.log("✅ SUCCESS: Reply posted!");
-                        break; // Only handle one comment per loop to be safe
+                        console.log("✅ Reply posted!");
                     }
-                }
-
-                if (!foundAny) {
-                    console.log("⚠️ Scratch returned empty HTML. Still being blocked or check BOT_USERNAME!");
+                } else {
+                    console.log("⚠️ Still seeing 0 comments. Check if your profile is set to 'Everyone' can comment.");
                 }
             } catch (err) {
                 console.error("❌ Loop Error:", err.message);
             }
-        }, 60000);
+        }, 30000); 
+
+    } catch (error) {
+        console.error("❌ Login Failed:", error.message);
+    }
+}
