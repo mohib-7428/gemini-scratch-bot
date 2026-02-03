@@ -6,11 +6,12 @@
   "type": "commonjs",
   "scripts": {
     "start": "node index.js"
+  },
   "dependencies": {
-  "@google/genai": "^1.39.0",
-  "scratch3-api": "latest", 
-  "dotenv": "^16.4.0"
-}
+    "@google/genai": "^1.39.0",
+    "scratch3-api": "latest",
+    "dotenv": "^16.4.0"
+  },
   "engines": {
     "node": ">=18.0.0"
   }
