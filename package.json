@@ -1,0 +1,12 @@
+{
+  "name": "gemini-scratch-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "scratch3-api": "^0.6.0",
+    "@google/genai": "^0.1.0"
+  }
+}
