@@ -10,25 +10,26 @@ async function runBot() {
         );
         console.log("✅ GeminiModel logged in successfully!");
 
-        // 2. Setup AI (The 2026 unified Client)
+        // 2. Setup AI (2026 Unified SDK)
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-        // 3. Generate Content (The fix is using ai.models.generateContent)
-        // In the new SDK, we pass the model name INSIDE the request
+        // 3. Generate Content using 1.5 Flash
+        // We tell the 'ai.models' service which model to use directly in the call
         const response = await ai.models.generateContent({
-            model: "gemini-2.0-flash",
-            contents: "Say 'The bot is officially fixed!' to mohib872345."
+            model: "gemini-1.5-flash", 
+            contents: "Say 'The bot is awake and using 1.5 Flash!' to mohib872345."
         });
 
-        // 4. Post to Scratch (New SDK returns .text directly)
+        // 4. Post to Scratch
         await session.comment({
-            user: "mohib872345",
+            user: "GeminiModel",
             content: `🤖 [GeminiModel]: ${response.text}`
         });
 
-        console.log("🚀 SUCCESS! Comment posted.");
+        console.log("🚀 SUCCESS! Comment posted using Gemini 1.5.");
 
     } catch (err) {
+        // This will catch any remaining quota or syntax errors
         console.error("❌ ERROR:", err.message);
     }
 }
