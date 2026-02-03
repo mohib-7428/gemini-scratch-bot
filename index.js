@@ -2,41 +2,37 @@ setInterval(async () => {
             try {
                 console.log("😴 Checking for new !ask comments...");
                 
-                // We add a timestamp to the URL to bypass Scratch's cache
-                const response = await fetch(`https://scratch.mit.edu/site-api/comments/user/${process.env.BOT_USERNAME}/?cachebust=${Date.now()}`);
-                const html = await response.text();
+                // Fetch direct JSON data from the API (Avoids the profile cache)
+                const response = await fetch(`https://api.scratch.mit.edu/users/${process.env.BOT_USERNAME}/comments?limit=10&cachebust=${Date.now()}`);
+                const comments = await response.json();
                 
-                // This regex is now more flexible to catch different spacing
-                const match = html.match(/!ask\s+([^<]+)/i); 
-                const commentIdMatch = html.match(/id="comments-(\d+)"/);
+                if (Array.isArray(comments) && comments.length > 0) {
+                    // Check the most recent comment
+                    const latest = comments[0];
+                    const text = latest.content;
 
-                if (match && commentIdMatch) {
-                    const question = match[1].trim();
-                    const currentId = commentIdMatch[1];
+                    // Case-insensitive check for !ask
+                    if (text.toLowerCase().includes("!ask") && latest.id !== lastCheckedCommentId) {
+                        const question = text.split(/!ask/i)[1].trim();
+                        console.log(`💬 Found Question: ${question}`);
+                        lastCheckedCommentId = latest.id;
 
-                    // LOG WHAT WE FOUND
-                    console.log(`🔎 Found potential ID: ${currentId}`);
-
-                    if (currentId !== lastCheckedCommentId) {
-                        console.log(`💬 New Question Detected: ${question}`);
-                        lastCheckedCommentId = currentId;
-
+                        // Get Gemini's Answer
                         const result = await model.generateContent(question);
                         const answer = result.response.text().substring(0, 400);
 
+                        // Reply using the session
                         await session.comment({
                             user: process.env.BOT_USERNAME,
-                            content: `🤖 ${answer}`,
-                            parent: currentId
+                            content: `🤖 @${latest.author.username} ${answer}`,
+                            parent: latest.id
                         });
-                        console.log("✉️ Reply posted successfully!");
+                        console.log("✉️ Reply posted!");
                     } else {
-                        console.log("📍 Comment found, but it's the same one as before.");
+                        console.log("📍 No new '!ask' detected in recent comments.");
                     }
-                } else {
-                    console.log("❓ No '!ask' found in the last 5 comments.");
                 }
             } catch (err) {
                 console.error("⚠️ Loop Error:", err.message);
             }
-        }, 60000); // Lowered to 60 seconds for faster testing
+        }, 45000); // 45 seconds is safe for the API
