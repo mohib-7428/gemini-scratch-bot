@@ -1,36 +1,33 @@
 const Scratch = require('scratch3-api');
-const { GoogleGenAI } = require("@google/genai"); // Stable 2026 import
+const { GoogleGenAI } = require("@google/genai");
 
 async function runBot() {
     try {
-        // 1. Log in to your email-verified GeminiModel account
+        // 1. Scratch Login
         const session = await Scratch.UserSession.create(
             process.env.BOT_USERNAME, 
             process.env.BOT_PASSWORD
         );
         console.log("✅ GeminiModel logged in successfully!");
 
-        // 2. Setup the AI with your API Key
-        const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-        
-        // 3. Use the latest 2.0 Flash model for fast responses
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" }); 
+        // 2. Setup AI (The 2026 way)
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-        // 4. Generate a custom celebration message
-        const prompt = "Celebrate that mohib872345's accounts are finally fixed and verified!";
-        const result = await model.generateContent(prompt);
-        const aiResponse = result.response.text();
+        // 3. Generate Content (The fix is here: ai.models.generateContent)
+        const response = await ai.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: [{ role: 'user', parts: [{ text: "Say 'The bot is alive!' to mohib872345." }] }]
+        });
 
-        // 5. Post the victory comment
+        // 4. Post the comment
         await session.comment({
             user: "mohib872345",
-            content: `🤖 [GeminiModel]: ${aiResponse}`
+            content: `🤖 [GeminiModel]: ${response.text}`
         });
 
         console.log("🚀 Victory! Comment posted.");
 
     } catch (err) {
-        // This will now show the REAL error if one still exists
         console.error("❌ ERROR:", err.message);
     }
 }
