@@ -1,44 +1,29 @@
 const Scratch = require('scratch3-api');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenerativeAI } = require("@google/genai"); // Match this to package.json!
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-let lastCommentId = null;
-
-async function fastScan() {
+async function runBot() {
     try {
-        const session = await Scratch.UserSession.create(process.env.BOT_USERNAME, process.env.BOT_PASSWORD);
+        // Double check your Variables in Railway are named exactly like these:
+        const session = await Scratch.UserSession.create(
+            process.env.BOT_USERNAME, 
+            process.env.BOT_PASSWORD
+        );
         
-        // Use the API to get comments (much faster than loading the whole page)
-        const response = await fetch(`https://api.scratch.mit.edu/users/GeminiModel/comments?limit=5`);
-        const comments = await response.json();
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        if (comments.length > 0) {
-            const topComment = comments[0];
+        console.log(`✅ GeminiModel is online!`);
+        
+        // Test message to your profile
+        const result = await model.generateContent("Say hello to mohib872345 and tell him the bot is fixed!");
+        await session.comment({
+            user: "mohib872345",
+            content: result.response.text()
+        });
 
-            if (topComment.id !== lastCommentId) {
-                lastCommentId = topComment.id;
-                console.log(`🚀 New Comment: ${topComment.content}`);
-
-                const result = await model.generateContent(`Reply to: "${topComment.content}"`);
-                const reply = result.response.text();
-
-                await session.comment({
-                    user: "GeminiModel",
-                    content: reply,
-                    parent: topComment.id
-                });
-                console.log("⚡ Replied in 'Light Speed' mode.");
-            }
-        }
     } catch (err) {
-        console.error("⚠️ Speed Bump:", err.message);
+        console.error("❌ Startup Error:", err.message);
     }
-
-    // Set a random delay between 15-25 seconds to trick the spam filter
-    const randomDelay = Math.floor(Math.random() * (25000 - 15000 + 1)) + 15000;
-    setTimeout(fastScan, randomDelay);
 }
 
-fastScan();
+runBot();
