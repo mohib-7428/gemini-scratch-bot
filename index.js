@@ -13,7 +13,7 @@ async function runBot() {
 
         // New method signature for 2026 SDK
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash', // The current stable model
+            model: 'gemini-1.5-flash', // The current stable model
             contents: [{ role: 'user', parts: [{ text: 'Say hi to mohib872345' }] }]
         });
 
