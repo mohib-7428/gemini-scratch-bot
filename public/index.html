@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Scratch Bot Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link id="custom-css" rel="stylesheet" href="">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Gemini Scratch Bot Dashboard</h1>
+            <div class="status-indicator">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="status-text">Checking...</span>
+            </div>
+        </header>
+
+        <div class="dashboard">
+            <div class="card">
+                <h2>📊 Bot Status</h2>
+                <div class="stats">
+                    <div class="stat">
+                        <span class="label">Uptime:</span>
+                        <span id="uptime">--:--:--</span>
+                    </div>
+                    <div class="stat">
+                        <span class="label">Total Replies:</span>
+                        <span id="total-replies">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="label">Last Check:</span>
+                        <span id="last-check">Never</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🎮 Controls</h2>
+                <div class="controls">
+                    <button id="start-bot" class="btn btn-primary">Start Bot</button>
+                    <button id="stop-bot" class="btn btn-danger">Stop Bot</button>
+                    <button id="restart-bot" class="btn btn-warning">Restart Bot</button>
+                    <button id="clear-logs" class="btn btn-secondary">Clear Logs</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📅 Activity Calendar</h2>
+                <div class="calendar-controls">
+                    <button id="prev-month" class="btn btn-small">◀ Prev</button>
+                    <span id="current-month">Loading...</span>
+                    <button id="next-month" class="btn btn-small">Next ▶</button>
+                </div>
+                <div id="calendar" class="calendar"></div>
+            </div>
+
+            <div class="card">
+                <h2>⚙️ Settings</h2>
+                <form id="settings-form">
+                    <div class="form-group">
+                        <label for="check-interval">Check Interval (seconds):</label>
+                        <input type="number" id="check-interval" name="checkInterval" min="10" max="300" value="35">
+                    </div>
+                    <div class="form-group">
+                        <label for="max-response-length">Max Response Length:</label>
+                        <input type="number" id="max-response-length" name="maxResponseLength" min="100" max="500" value="450">
+                    </div>
+                    <div class="form-group">
+                        <label for="ai-model">AI Model:</label>
+                        <select id="ai-model" name="aiModel">
+                            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                            <option value="gemini-pro">Gemini Pro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom-css-url">Custom CSS URL:</label>
+                        <input type="text" id="custom-css-url" name="customCssUrl" placeholder="https://example.com/custom.css">
+                    </div>
+                    <button type="submit" class="btn btn-success">Save Settings</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>📜 Activity Logs</h2>
+                <div id="logs" class="logs"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/script.js"></script>
+</body>
+</html>
